@@ -8,9 +8,10 @@ async function convertRsaToJwk() {
         join(__dirname, '../publicKey.pem'),
         'utf8'
     );
+
     try {
         const key = await JWK.asKey(PUBLIC_KEY_PEM, 'pem');
-        const jwk = key.toJSON(false);
+        const jwk: any = key.toJSON(false); // Utiliser une assertion de type ici
         jwk.use = 'sig';
         jwk.alg = 'RS256';
         return jwk;
@@ -26,9 +27,11 @@ async function convertRsaToJwk() {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
         const jwk = await convertRsaToJwk();
-        res.status(200).json(jwk);
+        res.status(200).json({ keys: [jwk] });
     } catch (error) {
         console.error('Erreur lors de la récupération de la clé JWK:', error);
-        res.status(500).json({ error: 'Erreur serveur', details: error.message });
+        // Vérifier si 'error' est une instance de Error avant d'accéder à 'message'
+        const message = error instanceof Error ? error.message : String(error);
+        res.status(500).json({ error: 'Erreur serveur', details: message });
     }
 }
